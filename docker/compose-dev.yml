@@ -1,0 +1,15 @@
+version: "3"
+services:
+        cassandra:
+            image: "cassandra:latest"
+            ports:
+                - "9042:9042"
+        cassandra_client:
+            build:
+                context: ../
+                dockerfile: docker/cassandra_client.Dockerfile
+            image: cassandra_client:built_from_compose_tag
+            environment:
+                - CASSANDRA_PATH=cassandra
+                - CASSANDRA_PORT=9042
+            
