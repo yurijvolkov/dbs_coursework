@@ -6,7 +6,7 @@ from cassandra.cqlengine.models import Model
 class PathModel(Model):
     path_id = columns.UUID(primary_key=True)
     order = columns.Integer(primary_key=True)
-    path_name = columns.Text(required=True)
+    path_name = columns.Text(required=True, index=True)
     node_id = columns.Integer(required=True)
 
 if __name__ == "__main__":
