@@ -14,9 +14,14 @@ class StatModel(Model):
     len = columns.Integer(required=True)
     duration = columns.Integer(required=True)
 
+class VisitedModel(Model):
+    path_id = columns.UUID(primary_key=True)
+    user_id = columns.UUID(primary_key=True)
+
 if __name__ == "__main__":
     connection.setup(['cassandra'], 'navigator', protocol_version=3)
     sync_table(PathModel)
     sync_table(StatModel)
+    sync_table(VisitedModel)
 
 
