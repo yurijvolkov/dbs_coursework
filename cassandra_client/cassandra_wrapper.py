@@ -49,3 +49,35 @@ class PathEndpoints:
             node.delete()
 
 
+class StatEndpoints:
+
+    @staticmethod
+    def get_stat(StatModel, path_id):
+        stat = StatModel.objects.filter(path_id=path_id).first()
+        if stat is None:
+            raise ValueError('No data found.')
+        return stat
+
+    @staticmethod
+    def create_stat(StatModel, PathModel, path_id, len, duration):
+        if PathEndpoints.get_path(PathModel, path_id).count() == 0:
+            raise ValueError('Path ID not exist.')
+        StatModel.create(path_id=path_id,
+                         len=len,
+                         duration=duration)
+
+    @staticmethod
+    def put_stat(StatModel, path_id, len=None, duration=None):
+        stat = StatEndpoints.get_stat(StatModel, path_id)
+        if len is not None:
+            stat.update(len=len)
+        if duration is not None:
+            stat.update(duration=duration)
+
+    @staticmethod
+    def delete_stat(StatModel, path_id):
+        stat = StatEndpoints.get_stat(StatModel, path_id)
+        stat.delete()
+        
+
+

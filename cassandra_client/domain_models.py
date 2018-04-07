@@ -9,8 +9,14 @@ class PathModel(Model):
     path_name = columns.Text(required=True, index=True)
     node_id = columns.Integer(required=True)
 
+class StatModel(Model):
+    path_id = columns.UUID(primary_key=True)
+    len = columns.Integer(required=True)
+    duration = columns.Integer(required=True)
+
 if __name__ == "__main__":
     connection.setup(['cassandra'], 'navigator', protocol_version=3)
     sync_table(PathModel)
+    sync_table(StatModel)
 
 

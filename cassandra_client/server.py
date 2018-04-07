@@ -5,13 +5,12 @@ from http import HTTPStatus
 from flask import Flask, request
 from flask_restful import Resource, Api, abort
 from werkzeug.contrib.fixers import ProxyFix
-from domain_models import PathModel
+from domain_models import PathModel, StatModel
 from cassandra.cqlengine import connection, ValidationError
 from cassandra.cqlengine.management import sync_table
 from cassandra.cqlengine.query import LWTException
 from cassandra import Unavailable, WriteTimeout
-from cassandra_wrapper import PathEndpoints
-from json.decoder import JSONDecoderError
+from cassandra_wrapper import PathEndpoints, StatEndpoints
 
 
 logger = logging.getLogger(__name__)
@@ -71,10 +70,6 @@ class Paths(Resource):
         except WriteTimeout:
             abort(HTTPStatus.REQUEST_TIMEOUT,
                   message='Insertion failed. Timeout.')
-        except JSONDecoderError:
-            abort(HTTPStatus.BAD_REQUEST,
-                  message='Data is incorrect.')
-
 
     def put(self):
         if ('path_id' not in request.args) or ('path_name' not in request.args):
@@ -108,8 +103,62 @@ class Paths(Resource):
         except ValueError:
             abort(HTTPStatus.NO_CONTENT, message='No data found.') 
 
+class Statistics(Resource):
+    def get(self):
+        if 'path_id' not in request.args:
+            abort(HTTPStatus.BAD_REQUEST, message='Not enough params.')
+        try:
+            statistics = StatEndpoints.get_stat(StatModel, request.args['path_id'])
+            return {"len": statistics.len,
+                    "duration": statistics.duration}
+        except ValueError:
+            abort(HTTPStatus.NO_CONTENT, message='No data found.')
+        except ValidationError as e:
+            abort(HTTPStatus.BAD_REQUEST,
+                     message='Validation error.'
+                     'Maybe parameters are incorrect?')
+            
+    def post(self):
+        data = json.loads(request.get_json())
+
+        if ('len' not in data) or ('duration' not in data) or ('path_id' not in data):
+            abort(HTTPStatus.BAD_REQUEST, message='Not enough params.')
+
+        len = data['len']
+        duration = data['duration']
+        path_id = data['path_id']
+
+        try:
+            StatEndpoints.create_stat(StatModel, PathModel, path_id, len, duration)
+        except ValueError:
+            abort(HTTPStatus.BAD_REQUEST, message='Incorrect data.')
+
+    def put(self):
+        if 'path_id' not in request.args:
+            abort(HTTPStatus.BAD_REQUEST, message='Not enough params.')
+
+        try:
+            StatEndpoints.put_stat(StatModel,
+                                   request.args['path_id'],
+                                   request.args['len'] if 'len' in request.args else None,
+                                   request.args['duration'] if 'duration' in request.args else None)
+        except ValueError:
+            abort(HTTPStatus.NO_CONTENT, message='No data found.')
+
+    def delete(self):
+        if 'path_id' not in request.args:
+            abort(HTTPStatus.BAD_REQUEST, message='Not enough params.')
+
+        try:
+            StatEndpoints.delete_stat(StatModel, request.args['path_id'])
+        except ValueError: 
+            abort(HTTPStatus.NO_CONTENT, message='No data found.')
+
+
+
 
 api.add_resource(Paths, '/paths')
+api.add_resource(Statistics, '/stat')
 connection.setup(['cassandra'], 'navigator', protocol_version=3)
 sync_table(PathModel)
 
