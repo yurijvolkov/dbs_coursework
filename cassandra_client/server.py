@@ -5,12 +5,12 @@ from http import HTTPStatus
 from flask import Flask, request
 from flask_restful import Resource, Api, abort
 from werkzeug.contrib.fixers import ProxyFix
-from domain_models import PathModel, StatModel
+from domain_models import PathModel, StatModel, VisitedModel
 from cassandra.cqlengine import connection, ValidationError
 from cassandra.cqlengine.management import sync_table
 from cassandra.cqlengine.query import LWTException
 from cassandra import Unavailable, WriteTimeout
-from cassandra_wrapper import PathEndpoints, StatEndpoints
+from cassandra_wrapper import PathEndpoints, StatEndpoints, VisitedEndpoints
 
 
 logger = logging.getLogger(__name__)
@@ -154,11 +154,47 @@ class Statistics(Resource):
         except ValueError: 
             abort(HTTPStatus.NO_CONTENT, message='No data found.')
 
+class Visited(Resource):
+    def get(self):
+        if 'user_id' not in request.args:
+            abort(HTTPStatus.BAD_REQUEST, message='Not enough params.')
+        try:
+            paths = VisitedEndpoints.get_visited_paths(VisitedModel, 
+                                                       request.args['user_id'])
+            return {'paths': list(map(lambda x: str(x.path_id), paths))}
+        except ValueError:
+            abort(HTTPStatus.NO_CONTENT, message='No data found.')
+    
+    def post(self):
+        data = json.loads(request.get_json())
 
+        if ('user_id' not in data) or ('path_id' not in data):
+            abort(HTTPStatus.BAD_REQUEST, message='Not enough params.')
+
+        user_id = data['user_id']
+        path_id = data['path_id']
+
+        try:
+            VisitedEndpoints.create_visited(PathModel, VisitedModel, 
+                                            path_id, user_id)
+        except ValueError:
+            abort(HTTPStatus.BAD_REQUEST, message='Incorrect data.')
+
+    def delete(self):
+        if ('path_id' not in request.args) or ('user_id' not in request.args):
+            abort(HTTPStatus.BAD_REQUEST, message='Not enough params.')
+
+        try:
+            VisitedEndpoints.delete_visited(PathModel, VisitedModel,
+                                            request.args['path_id'],
+                                            request.args['user_id'])
+        except ValueError:
+            abort(HTTPStatus.NO_CONTENT, message='No data found.')
 
 
 api.add_resource(Paths, '/paths')
 api.add_resource(Statistics, '/stat')
+api.add_resource(Visited, '/visit')
 connection.setup(['cassandra'], 'navigator', protocol_version=3)
 sync_table(PathModel)
 

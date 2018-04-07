@@ -78,6 +78,34 @@ class StatEndpoints:
     def delete_stat(StatModel, path_id):
         stat = StatEndpoints.get_stat(StatModel, path_id)
         stat.delete()
+
+class VisitedEndpoints:
+
+    @staticmethod
+    def get_visited_paths(VisitedModel, user_id):
+        paths = VisitedModel.objects.allow_filtering().filter(user_id=user_id)
+        if paths.count() == 0:
+            raise ValueError('No data found.') 
+        return paths
+    
+    @staticmethod
+    def create_visited(PathModel, VisitedModel, path_id, user_id):
+        if PathEndpoints.get_path(PathModel, path_id).count() == 0:
+            raise ValueError('Path ID not exist.')
+        VisitedModel.create(path_id=path_id,
+                            user_id=user_id)
+    
+    @staticmethod
+    def delete_visited(PathModel, VisitedModel, path_id, user_id):
+        if PathEndpoints.get_path(PathModel, path_id).count() == 0:
+            raise ValueError('Path ID not exist.')
+        visited = ( VisitedModel.objects.filter(user_id=user_id)
+                                       .filter(path_id=path_id)
+                                       .first() )
+        if visited is None:
+           raise ValueError('Data not found.')
+        visited.delete()
+
         
 
 
