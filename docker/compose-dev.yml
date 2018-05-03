@@ -1,9 +1,25 @@
 version: "3"
 services:
-        cassandra:
+        cassandra1:
             image: "cassandra:latest"
+            environment:
+                - CASSANDRA_CLUSTER_NAME=dev_cluster
+                - CASSANDRA_SEEDS=cassandra1
             ports:
                 - "9042:9042"
+
+        cassandra2:
+            image: "cassandra:latest"
+            environment:
+                - CASSANDRA_CLUSTER_NAME=dev_cluster
+                - CASSANDRA_SEEDS=cassandra1
+
+        cassandra3:
+            image: "cassandra:latest"
+            environment:
+                - CASSANDRA_CLUSTER_NAME=dev_cluster
+                - CASSANDRA_SEEDS=cassandra1
+
         cassandra_client:
             build:
                 context: ../
@@ -12,7 +28,7 @@ services:
                 - ../cassandra_client:/cassandra_client
             image: cassandra_client:built_from_compose_tag
             environment:
-                - CASSANDRA_HOST=cassandra
+                - CASSANDRA_HOST=cassandra1
                 - CASSANDRA_PORT=9042
             ports:
                 - "8045:8045"

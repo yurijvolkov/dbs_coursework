@@ -12,7 +12,6 @@ from cassandra.cqlengine.query import LWTException
 from cassandra import Unavailable, WriteTimeout
 from cassandra_wrapper import PathEndpoints, StatEndpoints, VisitedEndpoints
 
-
 logger = logging.getLogger(__name__)
 app = Flask(__name__)
 api = Api(app)
@@ -26,30 +25,30 @@ class Paths(Resource):
                                             request.args['path_id'])
                 return {'nodes': list(map(lambda x: x.node_id, models)),
                         'path_name': models.first().path_name}
-            except ValueError: 
-                abort(HTTPStatus.NO_CONTENT, 
-                          message='No data found.')
-
             except ValidationError as e:
                 abort(HTTPStatus.BAD_REQUEST,
                       message='Validation error.'
                               'Maybe parameters are incorrect?')
+            except ValueError: 
+                abort(HTTPStatus.NO_CONTENT, 
+                          message='No data found.')
+
         elif 'path_name' in request.args:
             try:
                 path_id = PathEndpoints.get_path_id(PathModel,
                                                     request.args['path_name'])
                 return {'path_id': str(path_id.path_id)}
-            except ValueError:
-                abort(HTTPStatus.BAD_REQUEST, 
-                      message='Error while selecting path_id.'
-                               'Maybe path_name is incorrect?')
             except ValidationError as e:
                 abort(HTTPStatus.BAD_REQUEST,
                       message='Validation error.'
                               'Maybe parameters are incorrect?')
+            except ValueError:
+                abort(HTTPStatus.BAD_REQUEST, 
+                      message='Error while selecting path_id.'
+                               'Maybe path_name is incorrect?')
         else:
-            abort(HTTPStatus.BAD_REQUEST, 
-                  message='Nor path_name, nor path_id specified.')
+            all_ids = PathEndpoints.get_all_paths(PathModel)
+            return all_ids
 
 
     def post(self):
@@ -111,13 +110,13 @@ class Statistics(Resource):
             statistics = StatEndpoints.get_stat(StatModel, request.args['path_id'])
             return {"len": statistics.len,
                     "duration": statistics.duration}
-        except ValueError:
-            abort(HTTPStatus.NO_CONTENT, message='No data found.')
         except ValidationError as e:
             abort(HTTPStatus.BAD_REQUEST,
                      message='Validation error.'
                      'Maybe parameters are incorrect?')
-            
+        except ValueError:
+            abort(HTTPStatus.NO_CONTENT, message='No data found.')
+           
     def post(self):
         data = json.loads(request.get_json())
 
@@ -195,7 +194,7 @@ class Visited(Resource):
 api.add_resource(Paths, '/paths')
 api.add_resource(Statistics, '/stat')
 api.add_resource(Visited, '/visit')
-connection.setup(['cassandra'], 'navigator', protocol_version=3)
+connection.setup(['cassandra1'], 'navigator', protocol_version=3)
 sync_table(PathModel)
 
 app.wsgi_app = ProxyFix(app.wsgi_app)

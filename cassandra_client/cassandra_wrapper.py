@@ -23,6 +23,12 @@ class PathEndpoints:
         return paths
 
     @staticmethod
+    def get_all_paths(PathModel):
+        paths = PathModel.objects.all()
+        print(paths.count())
+        return list( set( map(lambda x: str(x.path_id), paths ) ) )
+
+    @staticmethod
     def get_path_id(PathModel, path_name):
         path = ( PathModel.objects.filter(path_name=path_name)
                                   .first() )
