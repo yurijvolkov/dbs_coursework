@@ -1,0 +1,63 @@
+version: "2"
+services:
+  mongo1:
+    container_name: mongo1
+    image: mongo:3.6-jessie
+    command: mongod --replSet sdb-cluster --bind_ip_all
+    ports:
+      - "27011:27017"
+    networks:
+      - sdb-cluster-net
+    volumes:
+      - mongo-volume_01:/data/db
+  mongo2:
+    container_name: mongo2
+    image: mongo:3.6-jessie
+    command: mongod --replSet sdb-cluster --bind_ip_all
+    ports:
+      - "27012:27017"
+    networks:
+      - sdb-cluster-net
+    volumes:
+      - mongo-volume_02:/data/db
+  mongo3:
+    container_name: mongo3
+    image: mongo:3.6-jessie
+    command: mongod --replSet sdb-cluster --bind_ip_all
+    ports:
+      - "27013:27017"
+    networks:
+      - sdb-cluster-net
+    volumes:
+      - mongo-volume_03:/data/db
+  arbiter1:
+    container_name: arbiter1
+    image: mongo:3.6-jessie
+    command: mongod --replSet sdb-cluster --bind_ip_all
+    ports:
+      - "27014:27017"
+    networks:
+      - sdb-cluster-net
+    volumes:
+      - mongo-arbiter:/data/db
+  arbiter2:
+    container_name: arbiter2
+    image: mongo:3.6-jessie
+    command: mongod --replSet sdb-cluster --bind_ip_all
+    ports:
+      - "27015:27017"
+    networks:
+      - sdb-cluster-net
+    volumes:
+      - mongo-arbiter-2:/data/db
+    
+
+networks:
+  sdb-cluster-net:
+
+volumes:
+  mongo-volume_01:
+  mongo-volume_02:
+  mongo-volume_03:
+  mongo-arbiter:
+  mongo-arbiter-2:
