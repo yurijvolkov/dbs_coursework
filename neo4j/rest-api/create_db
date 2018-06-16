@@ -1,0 +1,14 @@
+USING PERIODIC COMMIT 10000
+LOAD CSV WITH HEADERS FROM "file:///nodes.csv" as line with line
+CREATE (:building {lon:toInteger(line.lon), lat: toInteger(line.lat), id: line.id})
+
+USING PERIODIC COMMIT 10000
+LOAD CSV WITH HEADERS FROM "file:///routes.csv" AS line
+MATCH (bFrom:Building), (bTo:Building)
+WHERE bFrom.id=line.fromNodeID and bTo.id=line.toNodeID
+CREATE (bFrom)-[r:Route {
+	transport: line.transport,
+    suitable_for_cars: toBoolean(line.suitable_for_cars),
+    length: toInteger(line.length)
+}]->(bTo);
+
